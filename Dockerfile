@@ -5,16 +5,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install FreeSWITCH runtime dependencies
 RUN apt-get update && apt-get install -y \
     libncurses5 \
-    libssl1.1 \
+    libssl3 \
     libedit2 \
     libcurl4 \
     libsndfile1 \
     libopus0 \
     libspeexdsp1 \
-    libavformat58 \
-    libswscale5 \
-    libvpx6 \
-    libyuv0 \
+    libavformat59 \
+    libswscale6 \
+    libvpx7 \
+    yasm unzip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy your already compiled FreeSWITCH server
