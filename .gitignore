@@ -1,0 +1,5 @@
+freeswitch/log/
+freeswitch/storage/
+freeswitch/recordings/
+freeswitch/db/
+freeswitch/certs/
