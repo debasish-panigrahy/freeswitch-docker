@@ -1,32 +1,37 @@
-# Base image
 FROM ubuntu:22.04
 
-# Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime dependencies
+# Install prerequisite packages
 RUN apt-get update && apt-get install -y \
-  libncurses5 \
-  libssl3 \
-  libedit2 \
-  libcurl4 \
-  libsndfile1 \
-  libopus0 \
-  libspeexdsp1 \
-  libavformat59 \
-  libswscale6 \
-  libvpx7 \
-  yasm \
-  unzip && \
-  apt-get clean && rm -rf /var/lib/apt/lists/*
+  git wget curl gnupg2 lsb-release ca-certificates \
+  build-essential autoconf automake libtool pkg-config \
+  libncurses5-dev libssl-dev libedit-dev \
+  libcurl4-openssl-dev libspeexdsp-dev libopus-dev \
+  libsndfile1-dev libavformat-dev libswscale-dev \
+  libvpx-dev libyuv-dev yasm unzip \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Create FreeSWITCH directory
-WORKDIR /usr/local/freeswitch
+# Step: Clone FreeSWITCH repo
+WORKDIR /usr/local/src
+RUN git clone https://github.com/signalwire/freeswitch.git
 
-# Copy your prebuilt FreeSWITCH directory from your repo
-COPY freeswitch/ /usr/local/freeswitch/
+WORKDIR /usr/local/src/freeswitch
 
-# Expose ports
+# Remove problematic modules BEFORE build (optional but avoids build failure)
+RUN sed -i '/mod_signalwire/d' modules.conf && \
+    sed -i '/mod_java/d' modules.conf && \
+    sed -i '/mod_avmd/d' modules.conf && \
+    sed -i '/mod_unimrcp/d' modules.conf && \
+    sed -i '/mod_flite/d' modules.conf
+
+# Build steps
+RUN ./bootstrap.sh && \
+    ./configure && \
+    make && \
+    make all install cd-sounds-install cd-moh-install
+
+# Ports commonly used by FreeSWITCH
 EXPOSE 5060/udp 5060/tcp \
        5080/udp 5080/tcp \
        5066/tcp \
@@ -34,5 +39,6 @@ EXPOSE 5060/udp 5060/tcp \
        8021/tcp \
        16384-32768/udp
 
-# Start FreeSWITCH
+# Working directory and command to run FreeSWITCH
+WORKDIR /usr/local/freeswitch
 CMD ["/usr/local/freeswitch/bin/freeswitch", "-nonat", "-nf"]
